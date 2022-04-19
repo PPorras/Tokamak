@@ -23,6 +23,7 @@ dw_0 = dw(psi_0)
 #const omega = 3.6430966211675684 #Def con inf
 #const omega = 3.6430704771333495 ### calculado con 1000000 puntos
 const omega = 3.643074351 ### calculado por Arturo
+const alpha = 2π 
 params = [w_0, dw_0]
 num = 64
 
@@ -118,39 +119,104 @@ end
 ######### Graph of the components of the torus ########
 #######################################################
 
-theta, varphi, XP, YP = torusTwoD(128, 256)
+theta, varphi, XP, YP = torusTwoD(32, 36)
+println("Complete two-dimensional torus")
 
-println("Graph of the components of the torus \n")
-plot(size = (800, 600))
-
-p1 = scatter(theta, YP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"y_{p}(\theta, \varphi)", legend = false)
-scatter!(theta, YP[:, end], markersize = 2.0)
-
-p2 = scatter(varphi, YP[1, :], markersize = 2.0, xlabel = L"\varphi", ylabel = L"y_{p}(\theta, \varphi)", legend = false)
-scatter!(varphi, YP[end, :], markersize = 2.0)
-
-p3 = scatter(theta, XP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"x_{p}(\theta, \varphi)", legend =  false)
-scatter!(theta, XP[:, end], markersize = 2.0)
-
-p4 = scatter(varphi, XP[1, :], markersize = 1.0, xlabel = L"\varphi", ylabel = L"x_{p}(\theta, \varphi)", legend =  false)
-scatter!(varphi, XP[end, :], markersize = 2.0)
-
-plot(p1, p2, p3, p4, layout =(2, 2))
-savefig("torusComponents.pdf")
-
-println("Complete")
-
-########################################################
+#######################################################
+################### Invariance error ##################
 #######################################################
 
 
-anim = @animate for i = 1:2:256
+"""
+invarianceError(θ::Vector{Float64}, φ::Vector{Float64}, Xp::Matrix{Float64}, Yp::Matrix{Float64})
 
-	plot(theta, YP[:, i], ylim = (0.25, 0.455))
+Compute the invariance error 
+
+### Input
+- `θ` -- list of 1D vector; 
+- `φ` -- list of 1D vector; 
+
+### Output
+
+List of vectors containing the 2D coordinates of the corner points of the
+convex hull.
+
+# Examples
+       ```jldoctest
+       julia> cube(2)
+       8
+       ```
+### Notes
+### Algorithm
+"""
+
+function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
+ Xp::Matrix{Float64}, Yp::Matrix{Float64})
+
+	lenθ, lenφ = length(θ), length(φ)
+	i, j = 1, 1
+	
+	while i <= lenφ
+
+		while j <= lenθ
+			
+			KXPθ = Spline1D(θ, Xp[:, i])  
+			KXPφ = Spline1D(φ, Xp[j, :])  
+			KYPθ = Spline1D(θ, Yp[:, i])  
+			KYPφ = Spline1D(φ, Yp[j, :])  
+
+			DKXPθ = Dierckx.derivative(KXPθ, θ[j])
+			DKXPφ = Dierckx.derivative(KXPφ, φ[i])
+			DKYPθ = Dierckx.derivative(KYPθ, θ[j])
+			DKYPφ = Dierckx.derivative(KYPφ, φ[i])
+			
+			xComp =	omega + DKXPθ*omega + DKXPφ*alpha		
+			yComp =	DKYPθ*omega + DKYPφ*alpha		
+			
+			DK = [xComp, yComp]
+
+			K = [θ[j] + Xp[:, i][j], Yp[:, i][j]] 
+			ZK = TokamakField(K, φ[i], params)
+		
+			println("Invariance error = ", abs.(ZK .- DK))
+	
+			j = j + 1
+
+		end 
+		
+		i = i + 1
+
+	end
+
+	println(lenθ)
 end
 
-gif(anim, "ypComponent.gif", fps = 30)
-#= 
+invarianceError(theta, varphi, XP, YP)
+
+#=
+println(grato)
+
+KXP = Spline2D(theta, varphi, XP) 
+KYP = Spline2D(theta, varphi, YP) 
+#println(KXP(pi, pi))
+
+point1 = π
+point2 = 0.0
+
+KYP0 = Spline1D(theta, YP[:, 1])
+KXP0 = Spline1D(theta, YP[:, 1])
+
+println("D_θK_0(π)  = ", Dierckx.derivative(KYP0, point))
+println("D_θK_0(π)ω  = ", Dierckx.derivative(KYP0, point)*omega)
+
+initCond = [point + KXP(point, 0.0), KYP(point, 0.0) ]
+a = TokamakField(initCond, 0.0, params)
+println("Z(K_0(π), 0)  = ", a)
+
+
+KYP = Spline1D(theta, YP[:, 2])
+println("Derivative of the spline in K_1= ", Dierckx.derivative(KYP, π))
+ 
 ########################################################
 #######################################################
 #println(length(theta), " ", length(varphi)," " ,length(psi))
