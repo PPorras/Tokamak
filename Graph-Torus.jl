@@ -84,8 +84,8 @@ println("Complete")
 ########################################################
 
 
-anim = @animate for i = 1:2:256
+#anim = @animate for i = 1:2:256
 
-	plot(theta, YP[:, i], ylim = (0.25, 0.455))
-end
-gif(anim, "ypComponent.gif", fps = 30)
+#	plot(theta, YP[:, i], ylim = (0.25, 0.455))
+#end
+#gif(anim, "ypComponent.gif", fps = 30)

@@ -63,8 +63,8 @@ xθ = closest(xtaux, θ)
 
 s =  collect(range(0.0 , stop = 2π ,length = 64))
 
-xp = Spline1D(xθ[:, 1], xθ[:, 2], k=3)
-yp = Spline1D(xθ[:, 1], xθ[:, 3], k=3)
+xp = Spline1D(xθ[:, 1], xθ[:, 2], k=3, periodic = true)
+yp = Spline1D(xθ[:, 1], xθ[:, 3], k=3, periodic = true)
 
 
 ###################################################
@@ -94,6 +94,7 @@ function torusTwoD(lenθ, lenφ)
 			aux = mod2pi(θ[i] - (omega*φ[j])/2pi) 
 
 			xinit = θ[i] - (omega*φ[j])/2pi + xp(aux)
+			
 			yinit = yp(aux)
 
 			tv = 0.0:0.5*φ[j]:φ[j] 
@@ -116,107 +117,159 @@ function torusTwoD(lenθ, lenφ)
 end
 
 #######################################################
-######### Graph of the components of the torus ########
+###### Derivatives of the components of the torus #####
 #######################################################
 
-theta, varphi, XP, YP = torusTwoD(32, 36)
-println("Complete two-dimensional torus")
+function derivativesData(θ, φ, data)
+
+	lenθ = length(data[:, 1])
+	lenφ = length(data[1, :])
+	
+	derθ = zeros(lenθ, lenφ)
+	derφ = zeros(lenθ, lenφ)
+
+	i = 1
+	
+	while i <= lenφ
+
+		SD = Spline1D(θ, data[:, i], k=3, periodic = true)
+		derθ[:, i] = Dierckx.derivative(SD, θ)
+
+		i = i + 1
+
+	end
+
+	i = 1
+	
+	while i <= lenθ
+
+		SD = Spline1D(φ, data[i, :], k=3, periodic = true)
+		derφ[i, :] = Dierckx.derivative(SD, φ)
+
+		i = i + 1
+
+	end
+	
+return derθ, derφ
+
+end
 
 #######################################################
 ################### Invariance error ##################
 #######################################################
 
 
-"""
-invarianceError(θ::Vector{Float64}, φ::Vector{Float64}, Xp::Matrix{Float64}, Yp::Matrix{Float64})
-
-Compute the invariance error 
-
-### Input
-- `θ` -- list of 1D vector; 
-- `φ` -- list of 1D vector; 
-
-### Output
-
-List of vectors containing the 2D coordinates of the corner points of the
-convex hull.
-
-# Examples
-       ```jldoctest
-       julia> cube(2)
-       8
-       ```
-### Notes
-### Algorithm
-"""
-
 function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
  Xp::Matrix{Float64}, Yp::Matrix{Float64})
 
 	lenθ, lenφ = length(θ), length(φ)
-	i, j = 1, 1
-	
-	while i <= lenφ
 
-		while j <= lenθ
+	j = 1
+
+	while j <= lenφ
+
+		i = 1
+
+		while i <= lenθ
 			
-			KXPθ = Spline1D(θ, Xp[:, i])  
-			KXPφ = Spline1D(φ, Xp[j, :])  
-			KYPθ = Spline1D(θ, Yp[:, i])  
-			KYPφ = Spline1D(φ, Yp[j, :])  
+			KXPθ = Spline1D(θ, Xp[:, j])  
+			KXPφ = Spline1D(φ, Xp[i, :])  
+			KYPθ = Spline1D(θ, Yp[:, j])  
+			KYPφ = Spline1D(φ, Yp[i, :])  
 
-			DKXPθ = Dierckx.derivative(KXPθ, θ[j])
-			DKXPφ = Dierckx.derivative(KXPφ, φ[i])
-			DKYPθ = Dierckx.derivative(KYPθ, θ[j])
-			DKYPφ = Dierckx.derivative(KYPφ, φ[i])
+			DKXPθ = Dierckx.derivative(KXPθ, θ[i])
+			DKXPφ = Dierckx.derivative(KXPφ, φ[j])
+			DKYPθ = Dierckx.derivative(KYPθ, θ[i])
+			DKYPφ = Dierckx.derivative(KYPφ, φ[j])
+		
 			
 			xComp =	omega + DKXPθ*omega + DKXPφ*alpha		
 			yComp =	DKYPθ*omega + DKYPφ*alpha		
 			
 			DK = [xComp, yComp]
 
-			K = [θ[j] + Xp[:, i][j], Yp[:, i][j]] 
-			ZK = TokamakField(K, φ[i], params)
-		
-			println("Invariance error = ", abs.(ZK .- DK))
-	
-			j = j + 1
+			K = [θ[i] + Xp[:, j][i], Yp[:, j][i]] 
+			ZK = TokamakField(K, φ[j], params)
+			
+			aux1[i, :] = [Yp[:, j][i],  DKYPθ, Xp[:, j][i], DKXPθ] 
 
-		end 
-		
-		i = i + 1
+			#println("Invariance error = ", abs.(ZK .- DK))
+	
+			i = i + 1
+
+		end
+
+		j = j + 1
 
 	end
 
 	println(lenθ)
 end
 
-invarianceError(theta, varphi, XP, YP)
+########################################################
+################# Derivative for data ##################
+########################################################
 
+
+########################################################
+########################################################
+########################################################
+theta, varphi, XP, YP = torusTwoD(256, 250)
+println("Tamaño XP = ", length(XP[:, 1]), length(XP[1, :]))
+println("Tamaño YP = ", length(YP[:, 1]), length(YP[1, :]))
+println("Complete two-dimensional torus")
+
+DXPθ, DXPφ = derivativesData(theta, varphi, XP)
+DYPθ, DYPφ = derivativesData(theta, varphi, YP)
+
+########################################################
+################### Theta Components ###################
+########################################################
+
+anim = @animate for i = 1:1:length(varphi)
+	
+	plot(theta, YP[:, i], label = L"Y_{p}(\theta, \varphi)")
+	plot!(theta, DYPθ[:, i], label = L"\partial_{\theta} Y_{p}(\theta, \varphi)")
+end
+
+gif(anim, "ypThetaComponents.gif", fps = 30)
+
+anim = @animate for i = 1:1:length(varphi)
+	
+	plot(theta, XP[:, i], label = L"X_{p}(\theta, \varphi)")
+	plot!(theta, DXPθ[:, i], label = L"\partial_{\theta} X_{p}(\theta, \varphi)")
+end
+
+gif(anim, "xpThetaComponents.gif", fps = 30)
+
+
+########################################################
+################## Varphi Components ###################
+########################################################
+
+anim = @animate for i = 1:1:length(theta)
+	
+	plot(varphi, YP[i, :], label = L"Y_{p}(\theta, \varphi)")
+	plot!(varphi, DYPφ[i, :], label = L"\partial_{\varphi} Y_{p}(\theta, \varphi)")
+end
+
+gif(anim, "ypVarphiComponents.gif", fps = 30)
+
+anim = @animate for i = 1:1:length(theta)
+	
+	plot(varphi, XP[i, :], label = L"X_{p}(\theta, \varphi)")
+	plot!(varphi, DXPφ[i, :], label = L"\partial_{\varphi} X_{p}(\theta, \varphi)")
+end
+
+gif(anim, "xpVarphiComponents.gif", fps = 30)
+
+
+########################################################
+########################################################
+########################################################
+#invarianceError(theta, varphi, XP, YP)
+println("Calculate of the Invariance Error ")
 #=
-println(grato)
-
-KXP = Spline2D(theta, varphi, XP) 
-KYP = Spline2D(theta, varphi, YP) 
-#println(KXP(pi, pi))
-
-point1 = π
-point2 = 0.0
-
-KYP0 = Spline1D(theta, YP[:, 1])
-KXP0 = Spline1D(theta, YP[:, 1])
-
-println("D_θK_0(π)  = ", Dierckx.derivative(KYP0, point))
-println("D_θK_0(π)ω  = ", Dierckx.derivative(KYP0, point)*omega)
-
-initCond = [point + KXP(point, 0.0), KYP(point, 0.0) ]
-a = TokamakField(initCond, 0.0, params)
-println("Z(K_0(π), 0)  = ", a)
-
-
-KYP = Spline1D(theta, YP[:, 2])
-println("Derivative of the spline in K_1= ", Dierckx.derivative(KYP, π))
- 
 ########################################################
 #######################################################
 #println(length(theta), " ", length(varphi)," " ,length(psi))
