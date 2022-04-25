@@ -7,7 +7,7 @@ using Dierckx
 ########################## Constats ############################
 ################################################################
 
-const eps = 0.004 #Perturbation
+const ε = 0.004 #Perturbation
 psi_0  = 0.35
 w(x) = (2 - x)*(2 - 2*x + x^2)/4
 dw(x) = ((-1)*(2 -2*x + x^2) + ( 2 - x )*(-2 + 2*x))/4
@@ -19,7 +19,7 @@ num = 300
 
 ################################################################
 
-println("\t Perturbation ", eps, "\n")
+println("\t Perturbation ", ε, "\n")
 println("\t Rotation number ", omega, "\n")
 println("\t Initial condition (0.0, 0.35397881128974557) \n")
 
@@ -31,7 +31,7 @@ function Field!(dx, x, params, t)
    w_0 = params[1]
    dw_0 = params[2]
    dx[1] = (2 - x[2])*(2 - 2*x[2] + x[2]^2)/4
-   dx[2] = eps*(2*sin(2*x[1] - t) + 3*sin(3*x[1] - 2*t)) - (eps^2)*dw_0*(2*cos(2*x[1] - t)/(2*w_0 - 1) + 3*cos(3*x[1] - 2*t)/(3*w_0 - 2))*(4*sin(2*x[1] - t)/(2*w_0 - 1) + 9*sin(3*x[1]- 2*t)/(3*w_0 - 2))
+   dx[2] = ε*(2*sin(2*x[1] - t) + 3*sin(3*x[1] - 2*t)) - (ε^2)*dw_0*(2*cos(2*x[1] - t)/(2*w_0 - 1) + 3*cos(3*x[1] - 2*t)/(3*w_0 - 2))*(4*sin(2*x[1] - t)/(2*w_0 - 1) + 9*sin(3*x[1]- 2*t)/(3*w_0 - 2))
     nothing
 
 end

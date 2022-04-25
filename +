@@ -23,7 +23,7 @@ dw_0 = dw(psi_0)
 #const omega = 3.6430966211675684 #Def con inf
 #const omega = 3.6430704771333495 ### calculado con 1000000 puntos
 const omega = 3.643074351 ### calculado por Arturo
-const alpha = 1.0 
+const alpha = 2π 
 params = [w_0, dw_0]
 num = 64
 
@@ -92,7 +92,9 @@ function torusTwoD(lenθ, lenφ)
 		while i <= lenθ	
 
 			aux = mod2pi(θ[i] - (omega*φ[j])/2pi) 
+
 			xinit = θ[i] - (omega*φ[j])/2pi + xp(aux)
+			
 			yinit = yp(aux)
 
 			tv = 0.0:0.5*φ[j]:φ[j] 
@@ -120,8 +122,8 @@ end
 
 function derivativesData(θ, φ, data)
 
-	lenθ = length(θ)
-	lenφ = length(φ)
+	lenθ = length(data[:, 1])
+	lenφ = length(data[1, :])
 	
 	derθ = zeros(lenθ, lenφ)
 	derφ = zeros(lenθ, lenφ)
@@ -162,32 +164,37 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 
 	lenθ, lenφ = length(θ), length(φ)
 
-	DXPθ, DXPφ = derivativesData(theta, varphi, XP)
-	DYPθ, DYPφ = derivativesData(theta, varphi, YP)
-
-	j, invError = 1, 0
+	j = 1
 
 	while j <= lenφ
 
 		i = 1
-		
-		#println("Complete for K_{$(j - 1)}")
+
 		while i <= lenθ
+			
+			KXPθ = Spline1D(θ, Xp[:, j])  
+			KXPφ = Spline1D(φ, Xp[i, :])  
+			KYPθ = Spline1D(θ, Yp[:, j])  
+			KYPφ = Spline1D(φ, Yp[i, :])  
+
+			DKXPθ = Dierckx.derivative(KXPθ, θ[i])
+			DKXPφ = Dierckx.derivative(KXPφ, φ[j])
+			DKYPθ = Dierckx.derivative(KYPθ, θ[i])
+			DKYPφ = Dierckx.derivative(KYPφ, φ[j])
 		
-			 
-			xComp =	(1.0 + DXPθ[:, j][i])*((omega*alpha)/(2π)) + DXPφ[:, j][i]*alpha		
-			yComp =	(DYPθ[:, j][i]*omega*alpha)/(2π) + DYPφ[:, j][i]*alpha		
+			
+			xComp =	omega + DKXPθ*omega + DKXPφ*alpha		
+			yComp =	DKYPθ*omega + DKYPφ*alpha		
+			
 			DK = [xComp, yComp]
+
 			K = [θ[i] + Xp[:, j][i], Yp[:, j][i]] 
 			ZK = TokamakField(K, φ[j], params)
-			#println("Vector Field = ", ZK)		
-			#aux1[i, :] = [Yp[:, j][i],  DKYPθ, Xp[:, j][i], DKXPθ] 
-			absError = abs.(ZK - DK)
-			if  absError[1] > invError || absError[2] > invError
-				
-				invError = max(absError[1], absError[2])
-			end
-				
+			
+			aux1[i, :] = [Yp[:, j][i],  DKYPθ, Xp[:, j][i], DKXPθ] 
+
+			#println("Invariance error = ", abs.(ZK .- DK))
+	
 			i = i + 1
 
 		end
@@ -195,9 +202,8 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 		j = j + 1
 
 	end
-	
-	println("Invariance Error = ", invError)
 
+	println(lenθ)
 end
 
 ########################################################
@@ -208,25 +214,27 @@ end
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(64, 64)
+theta, varphi, XP, YP = torusTwoD(4, 4)
 
-println("Complete torus two-dimensional")
+println("theta = ", theta, "\n")
+println("varphi = ", varphi, "\n")
+println("XP = ", XP, "\n")
+println("YP = ", YP, "\n")
+println("Complete two-dimensional torus")
 
-invarianceError(theta, varphi, XP, YP)
+#DXPθ, DXPφ = derivativesData(theta, varphi, XP)
+#DYPθ, DYPφ = derivativesData(theta, varphi, YP)
 
-println("Complete invariance error")
-
-DXPθ, DXPφ = derivativesData(theta, varphi, XP)
-DYPθ, DYPφ = derivativesData(theta, varphi, YP)
-
+#DKθφ = [omega .+ DXPθ*omega + DXPφ*alpha; DYPθ*omega + DYPφ*alpha]
+#K = [theta .+ XP; YP]
 
 ########################################################
 ################### Theta Components ###################
 ########################################################
-
+#=
 anim = @animate for i = 1:1:length(varphi)
 	
-	plot(theta, YP[:, i], ylim = (-0.4, 0.5) , xlabel = L"\theta" ,label = L"Y_{p}(\theta, \varphi)")
+	plot(theta, YP[:, i], label = L"Y_{p}(\theta, \varphi)")
 	plot!(theta, DYPθ[:, i], label = L"\partial_{\theta} Y_{p}(\theta, \varphi)")
 end
 
@@ -234,7 +242,7 @@ gif(anim, "ypThetaComponents.gif", fps = 30)
 
 anim = @animate for i = 1:1:length(varphi)
 	
-	plot(theta, XP[:, i], ylim = (-1.0, 2.0), xlabel = L"\theta" ,label = L"X_{p}(\theta, \varphi)")
+	plot(theta, XP[:, i], label = L"X_{p}(\theta, \varphi)")
 	plot!(theta, DXPθ[:, i], label = L"\partial_{\theta} X_{p}(\theta, \varphi)")
 end
 
@@ -247,7 +255,7 @@ gif(anim, "xpThetaComponents.gif", fps = 30)
 
 anim = @animate for i = 1:1:length(theta)
 	
-	plot(varphi, YP[i, :], ylim = (-0.25, 0.6), xlabel = L"\varphi" ,label = L"Y_{p}(\theta, \varphi)")
+	plot(varphi, YP[i, :], label = L"Y_{p}(\theta, \varphi)")
 	plot!(varphi, DYPφ[i, :], label = L"\partial_{\varphi} Y_{p}(\theta, \varphi)")
 end
 
@@ -255,13 +263,13 @@ gif(anim, "ypVarphiComponents.gif", fps = 30)
 
 anim = @animate for i = 1:1:length(theta)
 	
-	plot(varphi, XP[i, :], ylim = (-1.0, 0.5 ), xlabel = L"\varphi", label = L"X_{p}(\theta, \varphi)")
+	plot(varphi, XP[i, :], label = L"X_{p}(\theta, \varphi)")
 	plot!(varphi, DXPφ[i, :], label = L"\partial_{\varphi} X_{p}(\theta, \varphi)")
 end
 
 gif(anim, "xpVarphiComponents.gif", fps = 30)
 
-#=
+
 ########################################################
 ########################################################
 ########################################################
