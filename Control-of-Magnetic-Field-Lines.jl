@@ -95,18 +95,21 @@ end
 ####################### stroboscopic map ####################### 
 ################################################################
 
+points = 1000
 
 torus(10)
 println("Completo 10")
 
-println("Stroboscopic map for 300 points \n")
-torus(1000)
+println("Stroboscopic map for $points points \n")
+torus(points)
 
 ################################################################
 ######################## writing files ######################### 
 ################################################################
 
 titleFile = "Torus0.35597881128974557modulus.txt"
+
+println("Filter with $num knots for the Spline  \n")
 
 θ, out = filter(titleFile, num)
 x = out[:, 1]

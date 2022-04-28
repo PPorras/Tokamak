@@ -14,7 +14,7 @@ x, omega  = dataGraph(titleFileOne) # This a function of Auxiliary-Functions
 xu, epsilonu  = dataGraph(titleFileTwo) # This a function of Auxiliary-Functions 
 xnu, epsilonnu  = dataGraph(titleFileThree) # This a function of Auxiliary-Function
 xtheta = convertTheta(x, omega)
-
+#=
 ################################################################
 xmaux =  xm
 bubbleSort!(xmaux)
@@ -82,10 +82,61 @@ println("Complete")
 
 ########################################################
 ########################################################
+=#
+theta, varphi, XP, YP = torusTwoD(258, 256)
+
+println("Complete torus two-dimensional")
+
+invarianceError(theta, varphi, XP, YP)
+
+println("Complete invariance error")
+
+DXPθ, DXPφ = derivativesData(theta, varphi, XP)
+DYPθ, DYPφ = derivativesData(theta, varphi, YP)
 
 
-#anim = @animate for i = 1:2:256
+########################################################
+################### Theta Components ###################
+########################################################
+anim = @animate for i = 1:1:length(varphi)
 
-#	plot(theta, YP[:, i], ylim = (0.25, 0.455))
-#end
-#gif(anim, "ypComponent.gif", fps = 30)
+	scatter(theta, YP[:, i], ylim = (-0.4, 0.5) , xlabel = L"\theta" ,label = L"Y_{    p}(\theta, \varphi)")
+	scatter!(theta, DYPθ[:, i], label = L"\partial_{\theta} Y_{p}(\theta, \varphi)"    )
+end
+
+gif(anim, "ypThetaComponents.gif", fps = 30)
+
+anim = @animate for i = 1:1:length(varphi)
+
+	plot(theta, XP[:, i], ylim = (-1.0, 2.0), xlabel = L"\theta" ,label = L"X_{p    }(\theta, \varphi)")
+	plot!(theta, DXPθ[:, i], label = L"\partial_{\theta} X_{p}(\theta, \varphi)"    )
+end
+
+gif(anim, "xpThetaComponents.gif", fps = 30)
+
+########################################################
+################## Varphi Components ###################
+########################################################
+
+anim = @animate for i = 1:1:length(theta)
+
+	plot(varphi, YP[i, :], ylim = (-0.25, 0.6), xlabel = L"\varphi" ,label = L"Y    _{p}(\theta, \varphi)")
+	plot!(varphi, DYPφ[i, :], label = L"\partial_{\varphi} Y_{p}(\theta, \varphi    )")
+end
+
+gif(anim, "ypVarphiComponents.gif", fps = 30)
+
+anim = @animate for i = 1:1:length(theta)
+
+	plot(varphi, XP[i, :], ylim = (-1.0, 0.5 ), xlabel = L"\varphi", label = L"X    _{p}(\theta, \varphi)")
+	plot!(varphi, DXPφ[i, :], label = L"\partial_{\varphi} X_{p}(\theta, \varphi    )")
+end
+
+gif(anim, "xpVarphiComponents.gif", fps = 30)
+
+########################################################
+########################################################
+
+########################################################
+########################################################
+########################################################

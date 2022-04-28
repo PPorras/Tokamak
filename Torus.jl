@@ -63,18 +63,29 @@ xθ = closest(xtaux, θ)
 
 s =  collect(range(0.0 , stop = 2π ,length = 64))
 
-xp = Spline1D(xθ[:, 1], xθ[:, 2], k=3, periodic = true)
-yp = Spline1D(xθ[:, 1], xθ[:, 3], k=3, periodic = true)
+xp = Spline1D(xθ[:, 1], xθ[:, 2]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
+yp = Spline1D(xθ[:, 1], xθ[:, 3]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
 
+
+###################################################
+####   ####
+###################################################
+
+function checkVectorRot(x0)
+
+tv = 0.0:π:2π
+xvs = taylorinteg(Field!,  x0, tv, 32, 1.0E-20, params; maxsteps=7_000_000)
+println("punto en el toro  = ", x0, "\n integracion 2π = ", xvs[end, :], "\n punto inicial mas  numero de rotacion =  ", [omega, alpha] + x0 )
+
+end
+
+aux = mod2pi(1.5 - (omega*0.7)/(2π))
+xi = 1.5 - (omega*0.7)/(2π) + xp(aux)
+yi = yp(aux)
+checkVectorRot([xi, yi])
 
 ###################################################
 #### Construction of the two-dimensional torus ####
-###################################################
-
-#########
-#SP(x) = surfacePhi(x, 0)
-###################################################
-
 ###################################################
 function torusTwoD(lenθ, lenφ)
 	
@@ -130,7 +141,7 @@ function derivativesData(θ, φ, data)
 	
 	while i <= lenφ
 
-		SD = Spline1D(θ, data[:, i], k=3, periodic = true)
+		SD = Spline1D(θ, data[:, i]; w=ones(length(θ)), k=3, periodic = true, s=0.0)
 		derθ[:, i] = Dierckx.derivative(SD, θ)
 
 		i = i + 1
@@ -141,7 +152,7 @@ function derivativesData(θ, φ, data)
 	
 	while i <= lenθ
 
-		SD = Spline1D(φ, data[i, :], k=3, periodic = true)
+		SD = Spline1D(φ, data[i, :]; w=ones(length(φ)), k=3, periodic = true, s=0.0)
 		derφ[i, :] = Dierckx.derivative(SD, φ)
 
 		i = i + 1
@@ -179,10 +190,12 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 			yComp =	(DYPθ[:, j][i]*omega*alpha)/(2π) + DYPφ[:, j][i]*alpha		
 			DK = [xComp, yComp]
 			K = [θ[i] + Xp[:, j][i], Yp[:, j][i]] 
-			ZK = TokamakField(K, φ[j], params)
-			#println("Vector Field = ", ZK)		
-			#aux1[i, :] = [Yp[:, j][i],  DKYPθ, Xp[:, j][i], DKXPθ] 
+			ZK = TokamakField(K, (φ[j])/(2π), params)
+
+			#println("Vector Field = ", ZK, " Directional derivative= ", DK)		
+
 			absError = abs.(ZK - DK)
+
 			if  absError[1] > invError || absError[2] > invError
 				
 				invError = max(absError[1], absError[2])
@@ -201,23 +214,27 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 end
 
 ########################################################
-################# Derivative for data ##################
+############ Plot three-dimensioanl torus ##############
 ########################################################
 
 
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(64, 64)
+#theta, varphi, XP, YP = torusTwoD(258, 256)
 
-println("Complete torus two-dimensional")
+#theta, varphi, XP, YP = torusTwoD(16, 8)
+#println("Complete two-dimensional torus")
 
-invarianceError(theta, varphi, XP, YP)
+#invarianceError(theta, varphi, XP, YP)
 
-println("Complete invariance error")
+#println("Complete invariance error")
 
-DXPθ, DXPφ = derivativesData(theta, varphi, XP)
-DYPθ, DYPφ = derivativesData(theta, varphi, YP)
+
+
+#=
+#DXPθ, DXPφ = derivativesData(theta, varphi, XP)
+#DYPθ, DYPφ = derivativesData(theta, varphi, YP)
 
 
 ########################################################
@@ -261,29 +278,5 @@ end
 
 gif(anim, "xpVarphiComponents.gif", fps = 30)
 
-#=
-########################################################
-########################################################
-########################################################
-#invarianceError(theta, varphi, XP, YP)
-println("Calculate of the Invariance Error ")
-
-########################################################
-#######################################################
-#println(length(theta), " ", length(varphi)," " ,length(psi))
-f = Spline2D(theta, varphi, psi) 
-
-xs = collect(0.0:0.1:2π)
-as = collect(0.0:0.1:2π)
-x_grid = [x for x = xs for y = as]
-a_grid = [y for x = xs for y = as]
-
-
-plot(size = (800, 600))
-plot!(x_grid, a_grid, f.(x_grid, a_grid), st = :surface, xlabel = L"\theta", ylabel = L"\varphi", zlabel = L"\Psi", camera = (45, 45))
-savefig("Parameterized-torus.pdf")
-
-########################################################
-#######################################################
 
 =#

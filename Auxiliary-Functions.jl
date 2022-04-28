@@ -114,10 +114,10 @@ function TokamakField(x, t, params)
 	w_0 = params[1]	
 	dw_0 = params[2]
 
-	xdot = (2 - x[2])*(2 - 2*x[2] + x[2]^2)/4
+	qdot = (2 - x[2])*(2 - 2*x[2] + x[2]^2)/4
 	pdot = ε*(2*sin(2*x[1] - t) + 3*sin(3*x[1] - 2*t)) - (ε^2)*dw_0*(2*cos(2*x[1] - t)/(2*w_0 - 1) + 3*cos(3*x[1] - 2*t)/(3*w_0 - 2))*(4*sin(2*x[1] - t)/(2*w_0 - 1) + 9*sin(3*x[1]- 2*t)/(3*w_0 - 2))
 
-	return [xdot, pdot]
+	return [qdot, pdot]
 
 end
 
