@@ -3,6 +3,7 @@
 using TaylorIntegration
 include("Auxiliary-Functions.jl")
 using Dierckx
+
 ################################################################
 ########################## Constats ############################
 ################################################################
@@ -13,9 +14,10 @@ w(x) = (2 - x)*(2 - 2*x + x^2)/4
 dw(x) = ((-1)*(2 -2*x + x^2) + ( 2 - x )*(-2 + 2*x))/4
 w_0 = w(psi_0)
 dw_0 = dw(psi_0)
-const omega = 3.643074351  ## Rotation number
-#const omega 3.6430704771333495
-num = 300
+#const omega = 3.643074351  ## Rotation number
+#const omega = 3.6430704771333495
+const omega = 3.6430690936048755
+num = 64
 
 ################################################################
 
@@ -47,16 +49,22 @@ x0 = [0, init]				# initial condition
 
 tv = 0.0:2π:4π			# time for stroboscopic map
 xvS = taylorinteg(Field!,  x0, tv, 25, 1.0E-20, params; maxsteps=7_000_000) 
-ω = rotation_number(xvS)
-ω2 = rotationNumber(xvS)
+println(xvS)
+
+ω = WBA(xvS[:, 1])
+#ω = rotation_number(xvS)
+#ω2 = rotationNumber(xvS)
+
+println("End the first run, the numbre is  ",  ω)
 
 tv = 0.0:2π:2π*fin			# time for stroboscopic map
 xvS = taylorinteg(Field!,  x0, tv, 25, 1.0E-20, params; maxsteps=7_000_000) 
 
-ω = rotation_number(xvS)
-ω2 = rotationNumber(xvS)
-
-
+ω = WBA(xvS[:, 1])
+#ω = rotation_number(xvS)
+#ω2 = rotationNumber(xvS)
+println("rotation number is = ", ω)
+println("Arturo's calculus = ", omega)
 =#
 ################################################################
 ####################### Invariant torus ########################
@@ -67,7 +75,7 @@ function torus(fin = 100000::Int64)
 
 	init = 0.35597881128974557
 	params = [w_0, dw_0]			# parameters 
-	x0 = [0.0, init]				# initial condition
+	x0 = [0.0, init]			# initial condition
 	tv = 0.0:2π:2π*fin			# time for stroboscopic map
 	nameFile = "Torus"*"$init"*".txt"
 	nameFileTwo = "Torus"*"$init"*"modulus.txt"
@@ -81,13 +89,10 @@ function torus(fin = 100000::Int64)
 	close(f)
 
 	xvS = taylorinteg(Field!,  x0, tv, 32, 1.0E-20, params; maxsteps=7_000_000) 
-	
-	
+	#println(xvS)	
 	writeFile(nameFile, xvS) # Function of Auxiliary-Function
-
 	xTwoPi = mod.(xvS, 2π)
 	writeFile(nameFileTwo, xTwoPi) # Function of Auxiliary-Function
-
 
 end
 
@@ -95,7 +100,7 @@ end
 ####################### stroboscopic map ####################### 
 ################################################################
 
-points = 1000
+points = 64
 
 torus(10)
 println("Completo 10")
@@ -111,15 +116,23 @@ titleFile = "Torus0.35597881128974557modulus.txt"
 
 println("Filter with $num knots for the Spline  \n")
 
-θ, out = filter(titleFile, num)
-x = out[:, 1]
-y = out[:, 2]
+#θ, out = filter(titleFile, num)
+xout, omegaa = dataGraph(titleFile)
+bubbleSort!(xout)
+
+θ = addTwoPi(xout)
+#println(θ, "\n")
+
+x = θ[:, 1]
+y = θ[:, 2]
+
+#println(x)
 
 tori = Spline1D(x, y, periodic = true)
-paraTorus = zeros(length(θ), 2)
+paraTorus = zeros(length(θ[:, 1]), 2)
  
-paraTorus[:, 1] = θ
-paraTorus[:, 2] = tori.(θ)
+paraTorus[:, 1] = θ[:, 1]
+paraTorus[:, 2] = tori.(θ[:, 1])
 
 nameFile = "uniformData.txt"
 f = open(nameFile, "w")
@@ -133,7 +146,7 @@ f = open(nameFileTwo, "w")
 write(f, "$num"*" "*"0.004"*"\n")
 close(f)
 
-writeFile(nameFileTwo, out)
+writeFile(nameFileTwo, θ)
 
 println("Complete \n")
 

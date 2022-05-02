@@ -62,6 +62,23 @@ function bubbleSort!(array)
 end
 
 ################################################################
+######################## add points ############################
+################################################################
+
+function addTwoPi(x)
+	
+	aux = zeros(length(x[:, 1]) + 1, 2)
+
+	aux[1: end-1, 1] = x[:, 1]
+	aux[1: end-1, 2] = x[:, 2]
+	
+	aux[end, :] = [2π  x[1, :][2]]
+
+	return aux
+
+end
+
+################################################################
 ####################### Sorted data ############################
 ################################################################
 
@@ -69,41 +86,82 @@ end
 ##################### Rotation number ##########################
 ################################################################
 
-function rotation_number(input)
-
-	a = input[:, 1]
-	l = length(a)
-	return (a[end] - a[1])/l
-
+function wp(t::Float64)::Float64
+    out = 0.0
+    
+    if 0.0 < t < 2π
+        
+        out = exp(-1.0/(t*(2π - t)))
+        
+    end
+    
+    return out
 end
 
 ################################################################
 
-function rotationNumber(input)
+function wpAveraging(N::Int64)::Float64
 
-	a = input[:, 1]
-	n, len =  2, length(a)
-	an = a[len] - a[1]
-	aux = (an + 2pi)/len
-	println(aux)
+    j = 0
+    aux = 0.0
+    
+    while j < N
+    
+        aux = aux + wp(j/N)
+        j += 1
 
-	while n <= len
+    end
+    
+    return aux
 
-		an = a[n] - a[1]
-		approx = (an + 2pi)/n
-
-		if approx < aux
-
-			#println(n)
-			aux = approx
-
-		end	
-		
-		n = n + 1
-	end
-
-	return aux
 end
+
+################################################################
+function WBA(x::Vector{Float64})::Float64
+    
+    N, n = length(x), 1
+    ρ, aux , weight = 0.0, 0.0, 0.0
+    
+    coef = wpAveraging(N)
+    
+    while n < N
+        
+        weight = wp((n - 1)/N)/coef
+        aux = (x[n + 1] - x[n])*weight
+        ρ = ρ + aux
+        n += 1
+                    
+    end
+       #println("n = ",n ," N = ", N)
+    return ρ
+    
+end
+################################################################
+#function rotationNumber(input)
+#
+#	a = input[:, 1]
+#	n, len =  2, length(a)
+#	an = a[len] - a[1]
+#	aux = (an + 2pi)/len
+#	println(aux)
+#
+#	while n <= len
+#
+#		an = a[n] - a[1]
+#		approx = (an + 2pi)/n
+#
+#		if approx < aux
+#
+#			#println(n)
+#			aux = approx
+#
+#		end	
+#		
+#		n = n + 1
+#	end
+#
+#	return aux
+#end
 
 ################################################################
 ######################## Vector Field ##########################
@@ -222,6 +280,7 @@ function convertTheta(x, omega)
 	return aux
 
 end
+
 ################################################################
 ##################### Open File for Plot #######################
 ################################################################
@@ -231,9 +290,10 @@ function dataGraph(nameFile)
 	f = open(nameFile)
 	headed = parse.(Float64, split(readline(f), " "))
 	len, omega = Int64(headed[1]), headed[2]
-	i = 1
+
 	dataFile = zeros(len, 2)
-	
+	i = 1
+
 	while i <= len 
 	
 		aux = parse.(Float64, split(readline(f), " "))

@@ -22,7 +22,8 @@ w_0 = w(psi_0)
 dw_0 = dw(psi_0)
 #const omega = 3.6430966211675684 #Def con inf
 #const omega = 3.6430704771333495 ### calculado con 1000000 puntos
-const omega = 3.643074351 ### calculado por Arturo
+ const omega = 3.6430690936048755
+#const omega = 3.643074351 ### calculado por Arturo
 const alpha = 1.0 
 params = [w_0, dw_0]
 num = 64
@@ -43,12 +44,12 @@ function Field!(dx, x, params, t)
 #################### Filter #######################
 ###################################################
 
-θ, out = filter(titleFile, num)
+#θ, out = filter(titleFile, num)
 
-x = out[:, 1]
-y = out[:, 2]
+#x = out[:, 1]
+#y = out[:, 2]
 
-torus = Spline1D(x, y, periodic = true)
+#torus = Spline1D(x, y, periodic = true)
 
 ###################################################
 ############## Two dimensional Torus ##############
@@ -56,16 +57,22 @@ torus = Spline1D(x, y, periodic = true)
 
 x, omegaa = dataGraph(titleFileOne)
 xtaux = convertTheta(x, omega)
-xtaux[:, 1] = mod2pi.(xtaux[:, 1])
+xtaux[:, 1] = mod.(xtaux[:, 1], 2π)
 bubbleSort!(xtaux)
 
-xθ = closest(xtaux, θ)
+xθ =  zeros(length(x[:, 1]) + 1, 3)
+
+xθ[1: end-1, 1] = xtaux[:, 1]
+xθ[1: end-1, 2] = xtaux[:, 2]
+xθ[1: end-1, 3] = xtaux[:, 3]
+xθ[end, :] = [2π xtaux[1, :][2] xtaux[1, :][3]]
+
+xtaux = nothing
 
 s =  collect(range(0.0 , stop = 2π ,length = 64))
 
 xp = Spline1D(xθ[:, 1], xθ[:, 2]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
 yp = Spline1D(xθ[:, 1], xθ[:, 3]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
-
 
 ###################################################
 ####   ####
@@ -75,15 +82,15 @@ function checkVectorRot(x0)
 
 tv = 0.0:π:2π
 xvs = taylorinteg(Field!,  x0, tv, 32, 1.0E-20, params; maxsteps=7_000_000)
-println("punto en el toro  = ", x0, "\n integracion 2π = ", xvs[end, :], "\n punto inicial mas  numero de rotacion =  ", [omega, alpha] + x0 )
+#println("punto en el toro  = ", x0, "\n integracion 2π = ", xvs[end, :], "\n punto inicial mas  numero de rotacion =  ", [omega, alpha] + x0 )
 
 end
 
-aux = mod2pi(1.5 - (omega*0.7)/(2π))
-xi = 1.5 - (omega*0.7)/(2π) + xp(aux)
-yi = yp(aux)
-checkVectorRot([xi, yi])
-
+#aux = mod2pi(1.5 - (omega*0.7)/(2π))
+#xi = 1.5 - (omega*0.7)/(2π) + xp(aux)
+#yi = yp(aux)
+#checkVectorRot([xi, yi])
+xθ =  nothing
 ###################################################
 #### Construction of the two-dimensional torus ####
 ###################################################
@@ -102,8 +109,8 @@ function torusTwoD(lenθ, lenφ)
 
 		while i <= lenθ	
 
-			aux = mod2pi(θ[i] - (omega*φ[j])/2pi) 
-			xinit = θ[i] - (omega*φ[j])/2pi + xp(aux)
+			aux = mod(θ[i] - (omega*φ[j])/2π, 2π) 
+			xinit = θ[i] - (omega*φ[j])/2π + xp(aux)
 			yinit = yp(aux)
 
 			tv = 0.0:0.5*φ[j]:φ[j] 
@@ -190,9 +197,9 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 			yComp =	(DYPθ[:, j][i]*omega*alpha)/(2π) + DYPφ[:, j][i]*alpha		
 			DK = [xComp, yComp]
 			K = [θ[i] + Xp[:, j][i], Yp[:, j][i]] 
-			ZK = TokamakField(K, (φ[j])/(2π), params)
+			ZK = TokamakField(K, φ[j], params)
 
-			#println("Vector Field = ", ZK, " Directional derivative= ", DK)		
+			#println("Vector Field = ", ZK, "\n  Directional derivative= ", DK)		
 
 			absError = abs.(ZK - DK)
 
@@ -221,14 +228,14 @@ end
 ########################################################
 ########################################################
 ########################################################
-#theta, varphi, XP, YP = torusTwoD(258, 256)
+theta, varphi, XP, YP = torusTwoD(258, 256)
 
 #theta, varphi, XP, YP = torusTwoD(16, 8)
-#println("Complete two-dimensional torus")
+println("Complete two-dimensional torus")
 
-#invarianceError(theta, varphi, XP, YP)
+invarianceError(theta, varphi, XP, YP)
 
-#println("Complete invariance error")
+println("Complete invariance error")
 
 
 

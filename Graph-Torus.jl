@@ -63,8 +63,8 @@ theta, varphi, XP, YP = torusTwoD(128, 256)
 
 plot(size = (800, 600))
 
-p1 = scatter(theta, YP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"y_{p}    (\theta, \varphi)", legend = false)
-scatter!(theta, YP[:, end], markersize = 2.0)
+p1 = plot(theta, YP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"y_{p}    (\theta, \varphi)", legend = false)
+plot!(theta, YP[:, end], markersize = 2.0)
 
 p2 = scatter(varphi, YP[1, :], markersize = 2.0, xlabel = L"\varphi", ylabel = L"y_{    p}(\theta, \varphi)", legend = false)
 scatter!(varphi, YP[end, :], markersize = 2.0)
