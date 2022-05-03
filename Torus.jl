@@ -95,6 +95,7 @@ xθ =  nothing
 #### Construction of the two-dimensional torus ####
 ###################################################
 function torusTwoD(lenθ, lenφ)
+
 	
 	X, Y = zeros(lenθ, lenφ), zeros(lenθ, lenφ)
 	θ = collect(range(0.0 , stop = 2π, length = lenθ))
@@ -176,7 +177,7 @@ end
 
 
 function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
- Xp::Matrix{Float64}, Yp::Matrix{Float64})
+ Xp::Matrix{Float64}, Yp::Matrix{Float64})::Float64
 
 	lenθ, lenφ = length(θ), length(φ)
 
@@ -216,29 +217,55 @@ function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
 
 	end
 	
-	println("Invariance Error = ", invError)
+	return invError
 
 end
 
 ########################################################
-############ Plot three-dimensioanl torus ##############
+############## Save components of torus ################
 ########################################################
 
+function saveFileTorus(θ::Vector{Float64}, φ::Vector{Float64},
+			Xp::Matrix{Float64}, Yp::Matrix{Float64})
+
+	lenθ, lenφ = length(θ), length(φ) 
+	nameFile = "ParamTorus.txt"
+
+	f = open(nameFile, "w")
+		write(f,"$lenθ"*" "*"$lenφ"*" "*"$omega"*" "*"$alpha"*
+			" "*"$errorInv"*" "*"$ε"*"\n")
+
+	i = 0
+	while i < lenθ
+		
+		j = 0
+		while j < lenφ 
+
+			auxX = Xp[:, j+1][i+1]
+			auxY = Yp[:, j+1][i+1]
+			write(f, "$i"*" "*"$j"*" "*"$auxX"*" "*"$auxY"*"\n")
+			j += 1		
+		end
+		i += 1
+	end
+	close(f)
+end
 
 ########################################################
 ########################################################
 ########################################################
 theta, varphi, XP, YP = torusTwoD(258, 256)
 
-#theta, varphi, XP, YP = torusTwoD(16, 8)
+#theta, varphi, XP, YP = torusTwoD(5, 4)
 println("Complete two-dimensional torus")
 
-invarianceError(theta, varphi, XP, YP)
+global errorInv = invarianceError(theta, varphi, XP, YP)
 
 println("Complete invariance error")
+#println(XP)
+saveFileTorus(theta, varphi, XP, YP)
 
-
-
+println("Complete to write file with invariance Torus")
 #=
 #DXPθ, DXPφ = derivativesData(theta, varphi, XP)
 #DYPθ, DYPφ = derivativesData(theta, varphi, YP)
