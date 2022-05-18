@@ -5,6 +5,7 @@
 using TaylorIntegration
 using Dierckx
 using Plots, LaTeXStrings
+using DelimitedFiles
 include("Auxiliary-Functions.jl")
 
 ###################################################
@@ -254,7 +255,7 @@ end
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(258, 256)
+theta, varphi, XP, YP = torusTwoD(256, 256)
 
 #theta, varphi, XP, YP = torusTwoD(5, 4)
 println("Complete two-dimensional torus")
