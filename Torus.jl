@@ -16,6 +16,7 @@ titleFileOne = "Torus0.35597881128974557.txt"
 ###################################################
 
 const ε = 0.004 #Perturbation
+#const ε = 0.0 #Perturbation
 psi_0  = 0.35
 w(x) = (2 - x)*(2 - 2*x + x^2)/4
 dw(x) = ((-1)*(2 -2*x + x^2) + ( 2 - x )*(-2 + 2*x))/4
@@ -255,7 +256,7 @@ end
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(256, 256)
+theta, varphi, XP, YP = torusTwoD(257, 257)
 
 #theta, varphi, XP, YP = torusTwoD(5, 4)
 println("Complete two-dimensional torus")
