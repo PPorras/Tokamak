@@ -54,7 +54,7 @@ plot!(a, torus.(a))
 plot(p1, p2, p3, p4, layout = (2, 2))
 
 savefig("All.pdf")
-
+=#
 ################################################################
 ################## Plot two-dimensional torus ##################
 ################################################################
@@ -63,17 +63,17 @@ theta, varphi, XP, YP = torusTwoD(128, 256)
 
 plot(size = (800, 600))
 
-p1 = plot(theta, YP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"y_{p}    (\theta, \varphi)", legend = false)
-plot!(theta, YP[:, end], markersize = 2.0)
+p1 = plot(theta, YP[:, 1], xlabel = L"\theta", ylabel = L"y_{p}(\theta,0)", legend = false)
+#plot!(theta, YP[:, end], markersize = 2.0)
 
-p2 = scatter(varphi, YP[1, :], markersize = 2.0, xlabel = L"\varphi", ylabel = L"y_{    p}(\theta, \varphi)", legend = false)
-scatter!(varphi, YP[end, :], markersize = 2.0)
+p2 = plot(varphi, YP[1, :], xlabel = L"\varphi", ylabel = L"y_{p}(0, \varphi)", legend = false)
+#scatter!(varphi, YP[end, :], markersize = 2.0)
 
-p3 = scatter(theta, XP[:, 1], markersize = 2.0, xlabel = L"\theta", ylabel = L"x_{p}    (\theta, \varphi)", legend =  false)
-scatter!(theta, XP[:, end], markersize = 2.0)
+p3 = plot(theta, XP[:, 1], xlabel = L"\theta", ylabel = L"x_{p}(\theta,0)", legend =  false)
+#scatter!(theta, XP[:, end], markersize = 2.0)
 
-p4 = scatter(varphi, XP[1, :], markersize = 1.0, xlabel = L"\varphi", ylabel = L"x_{    p}(\theta, \varphi)", legend =  false)
-scatter!(varphi, XP[end, :], markersize = 2.0)
+p4 = plot(varphi, XP[1, :], xlabel = L"\varphi", ylabel = L"x_{p}(0, \varphi)", legend =  false)
+#scatter!(varphi, XP[end, :], markersize = 2.0)
 
 plot(p1, p2, p3, p4, layout =(2, 2))
 savefig("torusComponents.pdf")
@@ -82,7 +82,7 @@ println("Complete")
 
 ########################################################
 ########################################################
-=#
+
 theta, varphi, XP, YP = torusTwoD(258, 256)
 
 println("Complete torus two-dimensional")

@@ -15,8 +15,8 @@ titleFileOne = "Torus0.35597881128974557.txt"
 
 ###################################################
 
-const ε = 0.004 #Perturbation
-#const ε = 0.0 #Perturbation
+##const ε = 0.004 #Perturbation
+const ε = 0.0 #Perturbation
 psi_0  = 0.35
 w(x) = (2 - x)*(2 - 2*x + x^2)/4
 dw(x) = ((-1)*(2 -2*x + x^2) + ( 2 - x )*(-2 + 2*x))/4
@@ -24,7 +24,7 @@ w_0 = w(psi_0)
 dw_0 = dw(psi_0)
 #const omega = 3.6430966211675684 #Def con inf
 #const omega = 3.6430704771333495 ### calculado con 1000000 puntos
- const omega = 3.6430690936048755
+##const omega = 3.6430690936048755
 #const omega = 3.643074351 ### calculado por Arturo
 const alpha = 1.0 
 params = [w_0, dw_0]
@@ -58,6 +58,8 @@ function Field!(dx, x, params, t)
 ###################################################
 
 x, omegaa = dataGraph(titleFileOne)
+const omega = omegaa
+println("numero de rotacion = ", omega, "\n")
 xtaux = convertTheta(x, omega)
 xtaux[:, 1] = mod.(xtaux[:, 1], 2π)
 bubbleSort!(xtaux)
@@ -71,7 +73,12 @@ xθ[end, :] = [2π xtaux[1, :][2] xtaux[1, :][3]]
 
 xtaux = nothing
 
-s =  collect(range(0.0 , stop = 2π ,length = 64))
+println("longitud \n", length(xθ), "\n")
+
+#println("theta \n", xθ[:, 1], "\n")
+#println("x= \n", xθ[:, 2], "\n")
+#println("y= \n", xθ[:, 3], "\n")
+#### s =  collect(range(0.0 , stop = 2π ,length = 64))
 
 xp = Spline1D(xθ[:, 1], xθ[:, 2]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
 yp = Spline1D(xθ[:, 1], xθ[:, 3]; w=ones(length(xθ[:, 1])), k=3, periodic = true, s=0.0)
@@ -104,6 +111,8 @@ function torusTwoD(lenθ, lenφ)
 	φ = collect(range(0.0 , stop = 2π, length = lenφ))
 	X[:, 1], Y[:, 1]= xp.(θ), yp.(θ)
 
+	### println("X=[:,1]  ", X[:, 1])
+	
 	j = 2
 
 	while j <= lenφ 
@@ -118,19 +127,25 @@ function torusTwoD(lenθ, lenφ)
 
 			tv = 0.0:0.5*φ[j]:φ[j] 
 			x0 = [xinit, yinit]
-			xvs = taylorinteg(Field!,  x0, tv, 32, 1.0E-20,
+			xvs = taylorinteg(Field!,  x0, tv, 3, 1.0E-20,
 			params; maxsteps=7_000_000)
 
 			X[(j - 1)*lenθ + i] = xvs[end, :][1] - θ[i]
 			Y[(j - 1)*lenθ + i] = xvs[end, :][2] 
-		
+			#X[:, j][i] = xvs[end, :][1] - θ[i]
+			#Y[:, j][i] = xvs[end, :][2] 
 			i = i + 1
 		end
 
+		#### println("X=[:,$j]  ", X[:, j])
 		j = j + 1
 
 	end
 
+#plot(size=(800, 600))
+#plot(Xθ[:, 1], Y[:, 1])
+#surf(Xθ, Y , φ)
+#savefig("Toro2Dphi.pdf")
 	return θ, φ, X, Y
 
 end
@@ -176,7 +191,6 @@ end
 #######################################################
 ################### Invariance error ##################
 #######################################################
-
 
 function invarianceError(θ::Vector{Float64}, φ::Vector{Float64},
  Xp::Matrix{Float64}, Yp::Matrix{Float64})::Float64
@@ -231,21 +245,29 @@ function saveFileTorus(θ::Vector{Float64}, φ::Vector{Float64},
 			Xp::Matrix{Float64}, Yp::Matrix{Float64})
 
 	lenθ, lenφ = length(θ), length(φ) 
-	nameFile = "ParamTorus.txt"
-
+	#println("len theta= ", lenθ)
+	nameFile = "ParamTorus$ε.txt"
+	freqomega = omega/2π
 	f = open(nameFile, "w")
-		write(f,"$lenθ"*" "*"$lenφ"*" "*"$omega"*" "*"$alpha"*
-			" "*"$errorInv"*" "*"$ε"*"\n")
 
-	i = 0
+		write(f,"2"*"\n"*"2"*"\n"*"20"*"\n")
+		write(f,"1.0e-13"*"\n"*"1.0e-15"*"\n")
+		write(f,"$(freqomega)"*" "*"$alpha"*"\n")
+		write(f,"$(lenθ - 1)"*" "*"$(lenφ - 1)"*"\n")
+		write(f,"$errorInv \n")
+
+	i = 1
 	while i < lenθ
 		
-		j = 0
+		j = 1
 		while j < lenφ 
 
-			auxX = Xp[:, j+1][i+1]
-			auxY = Yp[:, j+1][i+1]
-			write(f, "$i"*" "*"$j"*" "*"$auxX"*" "*"$auxY"*"\n")
+			#auxX = Xp[:, j][i]
+			#auxY = Yp[:, j][i]
+
+			auxX = Xp[i, :][j]
+			auxY = Yp[i, :][j]
+			write(f, "$(i - 1)"*" "*"$(j - 1)"*" "*"$auxX"*" "*"$auxY"*"\n")
 			j += 1		
 		end
 		i += 1
@@ -256,14 +278,16 @@ end
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(257, 257)
-
+theta, varphi, XP, YP = torusTwoD(2^9 + 1, 2^8 + 1)
+#println("X= ", XP)
+#println("Y= ", YP)
+#theta, varphi, XP, YP = torusTwoD(2^3 + 1, 2^2 + 1)
 #theta, varphi, XP, YP = torusTwoD(5, 4)
 println("Complete two-dimensional torus")
 
 global errorInv = invarianceError(theta, varphi, XP, YP)
 
-println("Complete invariance error")
+println("Complete invariance error", errorInv)
 #println(XP)
 saveFileTorus(theta, varphi, XP, YP)
 
