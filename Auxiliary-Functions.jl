@@ -289,7 +289,7 @@ function dataGraph(nameFile)
 
 	f = open(nameFile)
 	headed = parse.(Float64, split(readline(f), " "))
-	len, omega = Int64(headed[1]), headed[2]
+	len, omega, epsilon = Int64(headed[1]), headed[2], headed[3]
 
 	dataFile = zeros(len, 2)
 	i = 1
@@ -303,7 +303,7 @@ function dataGraph(nameFile)
 	end
 
 	close(f)
-	return dataFile, omega
+	return dataFile, omega, epsilon
  end
 
 ################################################################

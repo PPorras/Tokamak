@@ -9,14 +9,15 @@ using DelimitedFiles
 include("Auxiliary-Functions.jl")
 
 ###################################################
+titleFile = "Torus0.355978811289745570.004modulus.txt"
+titleFileOne = "Torus0.355978811289745570.004.txt"
 
-titleFile = "Torus0.35597881128974557modulus.txt"
-titleFileOne = "Torus0.35597881128974557.txt"
-
+#titleFile = "Torus0.350.003modulus.txt"
+#titleFileOne = "Torus0.350.003.txt"
 ###################################################
 
 ##const ε = 0.004 #Perturbation
-const ε = 0.0 #Perturbation
+#const ε = 0.0001 #Perturbation
 psi_0  = 0.35
 w(x) = (2 - x)*(2 - 2*x + x^2)/4
 dw(x) = ((-1)*(2 -2*x + x^2) + ( 2 - x )*(-2 + 2*x))/4
@@ -28,11 +29,12 @@ dw_0 = dw(psi_0)
 #const omega = 3.643074351 ### calculado por Arturo
 const alpha = 1.0 
 params = [w_0, dw_0]
-num = 64
+num = 100
 
 ###################################################
 #################### Field ########################
 ###################################################
+################### Chandre's Vector Field  ####################
 
 function Field!(dx, x, params, t)
  	w_0 = params[1]
@@ -42,6 +44,17 @@ function Field!(dx, x, params, t)
  	nothing
 
  end
+
+################### Ugo's Vector Field  ####################
+#=
+function Field!(dx, x, params, t)
+ 	
+	dx[1] = (2 - x[2])*(2 - 2*x[2] + x[2]^2)/4
+ 	dx[2] = ε*(2*sin(2*x[1] - t) + 3*sin(3*x[1] - 2*t)) + (3/2)*(ε^2)*(27*sin(6*x[1] - 4*t) + 6*(5*sin(5*x[1] - 3*t) - sin(x[1] - t)) - 8*sin(4*x[1] - 2*t))
+ 	nothing
+
+end
+=#
 ###################################################
 #################### Filter #######################
 ###################################################
@@ -57,9 +70,11 @@ function Field!(dx, x, params, t)
 ############## Two dimensional Torus ##############
 ###################################################
 
-x, omegaa = dataGraph(titleFileOne)
-const omega = omegaa
+x, omegaa, epsilon = dataGraph(titleFileOne)
+const omega  = omegaa
+const ε = epsilon 
 println("numero de rotacion = ", omega, "\n")
+println("Perturbation = ", ε, "\n")
 xtaux = convertTheta(x, omega)
 xtaux[:, 1] = mod.(xtaux[:, 1], 2π)
 bubbleSort!(xtaux)
@@ -127,7 +142,7 @@ function torusTwoD(lenθ, lenφ)
 
 			tv = 0.0:0.5*φ[j]:φ[j] 
 			x0 = [xinit, yinit]
-			xvs = taylorinteg(Field!,  x0, tv, 3, 1.0E-20,
+			xvs = taylorinteg(Field!,  x0, tv, 16, 1.0E-20,
 			params; maxsteps=7_000_000)
 
 			X[(j - 1)*lenθ + i] = xvs[end, :][1] - θ[i]
@@ -142,10 +157,6 @@ function torusTwoD(lenθ, lenφ)
 
 	end
 
-#plot(size=(800, 600))
-#plot(Xθ[:, 1], Y[:, 1])
-#surf(Xθ, Y , φ)
-#savefig("Toro2Dphi.pdf")
 	return θ, φ, X, Y
 
 end
@@ -254,7 +265,7 @@ function saveFileTorus(θ::Vector{Float64}, φ::Vector{Float64},
 		write(f,"1.0e-13"*"\n"*"1.0e-15"*"\n")
 		write(f,"$(freqomega)"*" "*"$alpha"*"\n")
 		write(f,"$(lenθ - 1)"*" "*"$(lenφ - 1)"*"\n")
-		write(f,"$errorInv \n")
+		write(f,"$ε  \n")
 
 	i = 1
 	while i < lenθ
@@ -278,7 +289,9 @@ end
 ########################################################
 ########################################################
 ########################################################
-theta, varphi, XP, YP = torusTwoD(2^9 + 1, 2^8 + 1)
+theta, varphi, XP, YP = torusTwoD(2^2 + 1, 2^2 + 1)
+println("Antes de la malla 2^9 \n")
+theta, varphi, XP, YP = torusTwoD(2^9 + 1, 2^9 + 1)
 #println("X= ", XP)
 #println("Y= ", YP)
 #theta, varphi, XP, YP = torusTwoD(2^3 + 1, 2^2 + 1)
